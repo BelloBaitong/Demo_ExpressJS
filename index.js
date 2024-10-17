@@ -39,7 +39,7 @@ const corsOptions = {
         }
     }
 }
-app.use(cors(corsOptions))
+app.use(cors())
 
 const limiter = ratelimit({
     windowMs: 60 * 1000,

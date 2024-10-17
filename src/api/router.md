@@ -1,3 +1,4 @@
 ## ROUTER ##
- 	/api/v1/psnp/auth
- 	/api/v1/psnp/test
+ 	/api/v1/app/auth
+ 	/api/v1/app/influ
+ 	/api/v1/app/test
