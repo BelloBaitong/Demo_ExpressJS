@@ -78,6 +78,28 @@ app.get('/', (req, res) => {
     return res.send('hello world test')
 })
 
+app.get("/get-portfolio", (req, res) => {
+    //business
+    return res.json([
+        {
+            title: "test1",
+            description: "test1",
+            imageUrl: ["url1", "url2", "url3"]
+        },
+        {
+            title: "test2",
+            description: "test2",
+            imageUrl: ["url1", "url2", "url3"]
+        },
+        {
+            title: "test3",
+            description: "test3",
+            imageUrl: ["url1", "url2", "url3"]
+        },
+    ])
+})
+
+
 // app.get('/api/v1/fefu/test', (req, res) => {
 //     return res.status(200).json({ success: true })
 // })

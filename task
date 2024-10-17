@@ -1,0 +1,233 @@
+### หน้า register
+===================================================
+POST /register
+
+request body
+- email
+- password
+- firstName
+- lastName
+- fbLink
+- igLink
+- xLink
+- tiktokLink
+- category Array<string>
+- profileUrl
+- influInfo
+
+response
+- sucuss :boolean
+- message :string
+
+
+### หน้า profile
+====================================================
+GET /get-profile
+
+request body
+-
+
+response
+- email
+- firstName
+- lastName
+- fbLink
+- igLink
+- xLink
+- tiktokLink
+- category Array<string>
+- profileUrl
+- influInfo
+
+====================================================
+POST /add-portfolio
+
+request body
+- title
+- description
+- imageUrl Array<string>
+
+
+response 
+- success : boolean
+- message : string
+====================================================
+
+METHOD : GET
+PATH: /get-portfolio
+
+request body
+-
+
+response
+- data : [
+    {
+        title:string
+        description:string
+        imageUrl : Array<string>
+    },
+    {
+        title:string
+        description:string
+        imageUrl : Array<string>
+    },
+    {
+        title:string
+        description:string
+        imageUrl : Array<string>
+    },
+    ...
+]
+====================================================
+
+
+
+### หน้า feed / search
+====================================================
+GET /jobs
+
+request body
+-
+
+response
+- data : [
+    {
+        jobID:number,
+        marketerID:number,
+        jobTitle:string,
+        jobDetail:string,
+        reward:number,
+        dueDate:string,
+        pictureURL:string
+    },
+    {
+        jobID:number,
+        marketerID:number,
+        jobTitle:string,
+        jobDetail:string,
+        reward:number,
+        dueDate:string,
+        pictureURL:string
+    },
+    {
+        jobID:number,
+        marketerID:number,
+        jobTitle:string,
+        jobDetail:string,
+        reward:number,
+        dueDate:string,
+        pictureURL:string
+    },
+    ...
+]
+
+====================================================
+POST /enroll-job
+
+request body
+- jobID:number
+
+response
+- success:boolean
+- message:string
+====================================================
+
+
+### หน้า work space
+
+GET /workspace
+
+request body
+-
+
+response
+- data : [
+
+    //กรณีที่เป็น jobStatus : "wait hiring"
+    {
+        jobEnrollId: 1,
+        jobId: 1,
+        influId: 1,
+        marketerId: 101,
+        jobStatus: "wait hiring",
+
+        jobTitle:string,
+        jobDetail:string,
+        reward:number,
+        dueDate:string,
+        pictureURL:string
+    },
+
+
+    //กรณีที่เป็น jobStatus : "wait draft"
+    {
+        jobEnrollId: 1,
+        jobId: 1,
+        influId: 1,
+        marketerId: 101,
+        jobStatus: "wait darft",
+
+        jobTitle:string,
+        jobDetail:string,
+        reward:number,
+        dueDate:string,
+        pictureURL:string,
+
+        draft:[
+            {
+                jobDraftID:number,
+                content:"string",
+                pictureURL:["url","url"], //array
+                videoURL:["url","url"], //array
+                status: "reject" | "approve",
+                reasonReject:"string"
+            },
+            ....
+        ]
+    },
+
+
+    //กรณีที่เป็น jobStatus : "wait post"
+    {
+        jobEnrollId: 1,
+        jobId: 1,
+        influId: 1,
+        marketerId: 101,
+        jobStatus: "wait darft",
+
+        jobTitle:string,
+        jobDetail:string,
+        reward:number,
+        dueDate:string,
+        pictureURL:string,
+
+        post:[
+            {
+                jobPostID:number,
+                postLink:"url",
+                status: "reject" | "approve",
+                reasonReject:"string"
+            },
+            ....
+        ]
+    },
+
+    //กรณีที่เป็น jobStatus : "confirm"
+    {
+        jobEnrollId: 1,
+        jobId: 1,
+        influId: 1,
+        marketerId: 101,
+        jobStatus: "confirm",
+
+        jobTitle:string,
+        jobDetail:string,
+        reward:number,
+        dueDate:string,
+        pictureURL:string
+    },
+]
+
+
+
+
