@@ -11,14 +11,26 @@ exports.createApi = async (app, version = '/api/v1') => {
     const writeFile = promisify(fs.writeFile)
     const appendFile = promisify(fs.appendFile)
 
-    const folders = (await readdir('./src/api')).filter((f) => !f.includes('.'))
-    await writeFile('./src/api/router.md', '## ROUTER ##')
+    const foldersInfuencer = (await readdir('./src/api/influencer')).filter((f) => !f.includes('.'))
+    await writeFile('./src/api/influencer/router.md', '## ROUTER ##')
 
-    for (const e of folders) {
-        const p = path.join(__dirname, `./${e}/${e}Router.js`)
+    for (const e of foldersInfuencer) {
+        const p = path.join(__dirname, `./influencer/${e}/${e}Router.js`)
         if (fs.existsSync(p)) {
-            appendFile('./src/api/router.md', `\n \t${version}/${prefix}/${e}`)
-            app.use(version + `/${prefix}` + `/${e}`, require(`./${e}/${e}Router`))
+            appendFile('./src/api/influencer/router.md', `\n \t${version}/${prefix}/${e}`)
+            app.use(version + `/${prefix}` + `/influencer/${e}`, require(`./influencer/${e}/${e}Router`))
         }
     }
+
+    const folderMarketer = (await readdir('./src/api/marketer')).filter((f) => !f.includes('.'))
+    await writeFile('./src/api/marketer/router.md', '## ROUTER ##')
+
+    for (const e of folderMarketer) {
+        const p = path.join(__dirname, `./marketer/${e}/${e}Router.js`)
+        if (fs.existsSync(p)) {
+            appendFile('./src/api/marketer/router.md', `\n \t${version}/${prefix}/${e}`)
+            app.use(version + `/${prefix}` + `/marketer/${e}`, require(`./marketer/${e}/${e}Router`))
+        }
+    }
+
 }

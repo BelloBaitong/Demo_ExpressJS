@@ -1,0 +1,1 @@
+touch ./src/api/influencer/finance/financeController.js ./src/api/influencer/finance/financeSchema.js ./src/api/influencer/finance/financeModel.js ./src/api/influencer/finance/financeRouter.js

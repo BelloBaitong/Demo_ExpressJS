@@ -2,7 +2,7 @@ require('dotenv').config()
 const bcrypt = require('bcryptjs')
 const dayjs = require('dayjs')
 const jsonwebtoken = require('jsonwebtoken')
-const authModel = require('../api/auth/authModel')
+
 
 exports.getOriginPath = (originalUrl) => {
     let replace = originalUrl.replace(`/api/v1/${process.env.PREFIX}`, '')
