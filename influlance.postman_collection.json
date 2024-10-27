@@ -1,0 +1,407 @@
+{
+	"info": {
+		"_postman_id": "e578ed2f-14ee-4737-819e-39c60987fe95",
+		"name": "influlance",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "29652243"
+	},
+	"item": [
+		{
+			"name": "influencer",
+			"item": [
+				{
+					"name": "auth",
+					"item": [
+						{
+							"name": "/login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Get the response body as JSON\r",
+											"var jsonData = pm.response.json();\r",
+											"\r",
+											"// Check if the access token exists in the response\r",
+											"if (jsonData.accessToken) {\r",
+											"    // Set the access token as an environment variable in Postman\r",
+											"    pm.environment.set(\"accessToken\", jsonData.accessToken);\r",
+											"}\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\":\"john.doe@example.com\",\r\n    \"password\":\"securepassword123\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url_server}}/api/v1/app/influencer/auth/login",
+									"host": [
+										"{{url_server}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"app",
+										"influencer",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/add-portfolio",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"title\": \"Fashion Week 2024 Campaign\",\r\n    \"description\": \"A portfolio showcasing my collaboration with top fashion brands during Fashion Week 2024.\",\r\n    \"images\": [\r\n        \"https://example.com/image1.jpg\",\r\n        \"https://example.com/image2.jpg\",\r\n        \"https://example.com/image3.jpg\"\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url_server}}/api/v1/app/influencer/auth/add-portfolio",
+									"host": [
+										"{{url_server}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"app",
+										"influencer",
+										"auth",
+										"add-portfolio"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "view-portfolio",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MWRlNjI3OWE5NTM0OTkxNWViMTU1NiIsImlhdCI6MTczMDAxMjc3OCwiZXhwIjoxNzQwMzgwNzc4fQ.GYH6K6B4SrWFKatBamQ2RWNLkheEPkT2xisTmvsOjsk",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url_server}}/api/v1/app/influencer/auth/view-portfolio",
+									"host": [
+										"{{url_server}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"app",
+										"influencer",
+										"auth",
+										"view-portfolio"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/me",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url_server}}/api/v1/app/influencer/auth/me",
+									"host": [
+										"{{url_server}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"app",
+										"influencer",
+										"auth",
+										"me"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/register",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Get the response body as JSON\r",
+											"var jsonData = pm.response.json();\r",
+											"\r",
+											"// Check if the access token exists in the response\r",
+											"if (jsonData.accessToken) {\r",
+											"    // Set the access token as an environment variable in Postman\r",
+											"    pm.environment.set(\"accessToken\", jsonData.accessToken);\r",
+											"}\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"email\": \"john.doe@example.com\",\r\n  \"password\": \"securepassword123\",\r\n  \"firstName\": \"John\",\r\n  \"lastName\": \"Doe\",\r\n  \"profilePicture\": \"https://example.com/profile-picture.jpg\",\r\n  \"facebook\": \"johnDoeFB\",\r\n  \"facebookFollower\": 10000,\r\n  \"instagram\": \"johnDoeIG\",\r\n  \"instagramFollower\": 15000,\r\n  \"x\": \"johnDoeX\",\r\n  \"xFollower\": 12000,\r\n  \"tiktok\": \"johnDoeTikTok\",\r\n  \"tiktokFollower\": 20000,\r\n  \"categories\": [\"fashion\", \"lifestyle\"],\r\n  \"yourInfo\": \"I am a fashion influencer with over 10 years of experience.\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url_server}}/api/v1/app/influencer/auth/register",
+									"host": [
+										"{{url_server}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"app",
+										"influencer",
+										"auth",
+										"register"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "marketer",
+			"item": [
+				{
+					"name": "auth",
+					"item": [
+						{
+							"name": "/login",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Get the response body as JSON\r",
+											"var jsonData = pm.response.json();\r",
+											"\r",
+											"// Check if the access token exists in the response\r",
+											"if (jsonData.accessToken) {\r",
+											"    // Set the access token as an environment variable in Postman\r",
+											"    pm.environment.set(\"accessToken\", jsonData.accessToken);\r",
+											"}\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\":\"example@example.com\",\r\n    \"password\":\"yourpassword\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url_server}}/api/v1/app/marketer/auth/login",
+									"host": [
+										"{{url_server}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"app",
+										"marketer",
+										"auth",
+										"login"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/register",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Get the response body as JSON\r",
+											"var jsonData = pm.response.json();\r",
+											"\r",
+											"// Check if the access token exists in the response\r",
+											"if (jsonData.accessToken) {\r",
+											"    // Set the access token as an environment variable in Postman\r",
+											"    pm.environment.set(\"accessToken\", jsonData.accessToken);\r",
+											"}\r",
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"email\": \"example@example.com\",\r\n    \"password\": \"yourpassword\",\r\n    \"firstName\": \"John\",\r\n    \"lastName\": \"Doe\",\r\n    \"facebook\": \"https://facebook.com/johndoe\",\r\n    \"instagram\": \"https://instagram.com/johndoe\",\r\n    \"x\": \"https://x.com/johndoe\",  // Previously Twitter\r\n    \"tiktok\": \"https://tiktok.com/@johndoe\",\r\n    \"profilePicture\": \"https://example.com/path-to-profile-pic.jpg\",\r\n    \"categories\": [\"fashion\", \"lifestyle\", \"beauty\"],\r\n    \"yourInfo\": \"Brief info about the marketer\",\r\n    \"brand\": \"John's Fashion\",\r\n    \"brandPicture\": \"https://example.com/path-to-brand-pic.jpg\"\r\n}\r\n",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url_server}}/api/v1/app/marketer/auth/register",
+									"host": [
+										"{{url_server}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"app",
+										"marketer",
+										"auth",
+										"register"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "/me",
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{accessToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{url_server}}/api/v1/app/marketer/auth/me",
+									"host": [
+										"{{url_server}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"app",
+										"marketer",
+										"auth",
+										"me"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		}
+	]
+}
