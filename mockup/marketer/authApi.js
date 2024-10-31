@@ -1,147 +1,62 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import Cookies from "js-cookie";
-import { supabase } from "../../shared/supabase";
 import { v4 as uuidv4 } from 'uuid';
+import mongoose from 'mongoose';
+import Marketer from '../../models/Marketer'; // Import your Marketer model
+import Account from '../../models/Account'; // Import your Account model
 
 const mockBaseQuery = async (arg) => {
+    await mongoose.connect(process.env.MONGO_URI); // Ensure you are connected to your MongoDB
+
     // Handle different endpoints (arg contains the query path or params)
     if (arg.url === '/login') {
-        const { email, password } = arg.body
-        const { data: marketerData, error } = await supabase
-            .from("marketer")
-            .select("email, password, accessToken")
-            .eq("email", email);
+        const { email, password } = arg.body;
+        const marketerData = await Marketer.findOne({ email }).select('email password accessToken');
 
-        if (error) {
-            console.log('error', error)
-            return { error: { status: 500, data: "Internal Server Error" } };
-        }
-
-        if (marketerData.length === 0) {
+        if (!marketerData) {
             return { error: { status: 400, data: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" } };
         }
 
-        const findAuth = marketerData[0]; // Supabase will return an array, so use the first entry.
-
-        if (findAuth.password !== password) {
+        if (marketerData.password !== password) {
             return { error: { status: 400, data: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" } };
         }
 
         return {
             data: {
-                accessToken: findAuth.accessToken
+                accessToken: marketerData.accessToken
             }
         };
     } else if (arg.url == '/me') {
-        const token = Cookies.get('accessToken')
+        const token = Cookies.get('accessToken');
         if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
+            return { error: { status: 401, data: "unauthorize" } };
         }
-        const { data: findToken, error } = await supabase
-            .from("marketer")
-            .select()
-            .eq("accessToken", token)
-            .single()
 
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
+        const findToken = await Marketer.findOne({ accessToken: token });
 
         if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
+            return { error: { status: 401, data: "unauthorize" } };
         }
-
-        const {
-            marketerId,
-            email,
-            accessToken,
-            firstName,
-            lastName,
-            profilePicture,
-            facebook,
-            instagram,
-            x,
-            tiktok,
-            categories,
-            yourInfo,
-            accountId,
-            brand,
-            brandPicture
-        } = findToken
 
         return {
-            data: {
-                marketerId,
-                email,
-                accessToken,
-                firstName,
-                lastName,
-                profilePicture,
-                facebook,
-                instagram,
-                x,
-                tiktok,
-                categories,
-                yourInfo,
-                accountId,
-                brand,
-                brandPicture
-            }
-        }
+            data: findToken
+        };
     } else if (arg.url.includes('/view-profile')) {
-        const token = Cookies.get('accessToken')
+        const token = Cookies.get('accessToken');
         if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
+            return { error: { status: 401, data: "unauthorize" } };
         }
 
-        const marketerId = arg.params
-        const { data: findToken, error } = await supabase
-            .from("marketer")
-            .select()
-            .eq("marketerId", marketerId)
-            .single()
+        const marketerId = arg.params;
+        const findToken = await Marketer.findOne({ marketerId });
 
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
+        if (!findToken) {
+            return { error: { status: 404, data: "Not Found" } };
         }
-
-
-        const {
-            email,
-            accessToken,
-            firstName,
-            lastName,
-            profilePicture,
-            facebook,
-            instagram,
-            x,
-            tiktok,
-            categories,
-            yourInfo,
-            accountId,
-            brand,
-            brandPicture
-        } = findToken
 
         return {
-            data: {
-                marketerId,
-                email,
-                accessToken,
-                firstName,
-                lastName,
-                profilePicture,
-                facebook,
-                instagram,
-                x,
-                tiktok,
-                categories,
-                yourInfo,
-                accountId,
-                brand,
-                brandPicture
-            }
-        }
+            data: findToken
+        };
     } else if (arg.url == '/register') {
         const {
             email,
@@ -157,84 +72,52 @@ const mockBaseQuery = async (arg) => {
             yourInfo,
             brand,
             brandPicture
-        } = arg.body
+        } = arg.body;
 
-        const token = uuidv4()
-        const { data: account, error: insertAccountError } = await supabase
-            .from("account")
-            .insert([
-                {
-                    type: 'marketer'
-                }
-            ])
-            .select()
-            .single()
+        const token = uuidv4();
+        const newAccount = new Account({ type: 'marketer' });
+        await newAccount.save();
 
-        if (insertAccountError) {
-            console.log('insertError', insertAccountError)
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
+        const newMarketer = new Marketer({
+            email,
+            password,
+            firstName,
+            lastName,
+            facebook,
+            instagram,
+            x,
+            tiktok,
+            profilePicture,
+            categories,
+            yourInfo,
+            accessToken: token,
+            accountId: newAccount._id,
+            brand,
+            brandPicture
+        });
 
-        const { data: registerData, error: insertError } = await supabase
-            .from("marketer")
-            .insert([
-                {
-                    email,
-                    password,
-                    firstName,
-                    lastName,
-                    facebook,
-                    instagram,
-                    x,
-                    tiktok,
-                    profilePicture,
-                    categories,
-                    yourInfo,
-                    accessToken: token,
-                    accountId: account.accountId,
-                    brand,
-                    brandPicture
-                }
-            ])
-            .select('marketerId')
-            .single()
-
-        if (insertError) {
-            console.log('insertError', insertError)
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
+        await newMarketer.save();
 
         return {
             data: {
                 accessToken: token
             }
         };
-
     } else if (arg.url == '/check-email') {
-        const {
-            email,
-        } = arg.body
-        const { data: findEmail, error } = await supabase
-            .from("marketer")
-            .select()
-            .eq("email", email);
+        const { email } = arg.body;
+        const findEmail = await Marketer.findOne({ email });
 
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        if (findEmail.length != 0) {
-            return { error: { status: 400, data: "อีเมลนี้มีผู้ใช้งานอยู่แล้ว" } }
+        if (findEmail) {
+            return { error: { status: 400, data: "อีเมลนี้มีผู้ใช้งานอยู่แล้ว" } };
         }
         return {
             status: 200,
             data: "สามารถใช้อีเมลนี้ได้"
-        }
+        };
     }
-    // You can add more mock responses for other endpoints here.
+
     return { error: { status: 404, data: 'Not found' } };
 };
-
 
 export const mktAuthApi = createApi({
     reducerPath: "mktAuthApi",
@@ -346,7 +229,7 @@ export const mktAuthApi = createApi({
             })
         }
     }
-})
+});
 
 export const {
     useLoginMutation,
@@ -356,4 +239,4 @@ export const {
     usePortfolioQuery,
     useAddPortfolioMutation,
     useViewProfileQuery
-} = mktAuthApi
+} = mktAuthApi;

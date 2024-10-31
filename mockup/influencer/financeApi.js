@@ -1,132 +1,79 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import Cookies from "js-cookie";
-import { supabase } from "../../shared/supabase";
+import Influencer from "../../models/Influencer"; // โมเดล Influencer
+import Transaction from "../../models/Transaction"; // โมเดล Transaction
 
 const mockBaseQuery = async (arg) => {
-    if (arg.url == '/finance-transaction') {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("influencer")
-            .select()
-            .eq("accessToken", token)
-            .single()
+    const token = Cookies.get('accessToken');
+    if (!token) {
+        return { error: { status: 401, data: "unauthorize" } };
+    }
 
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
+    // หาข้อมูล Influencer ตาม accessToken
+    const findToken = await Influencer.findOne({ accessToken: token });
+    if (!findToken) {
+        return { error: { status: 401, data: "unauthorize" } };
+    }
 
-        if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
+    const accountId = findToken.accountId;
 
-        const accountId = findToken.accountId
-
-        console.log('accountId', accountId)
-        const { data: transaction, error: transactionError } = await supabase
-            .from("transaction")
-            .select()
-            .eq("sourceAccountId", accountId)
-            .order("createDate", { ascending: false })
+    if (arg.url === '/finance-transaction') {
+        // ดึงรายการ transaction ตาม sourceAccountId
+        const transactions = await Transaction.find({ sourceAccountId: accountId })
+            .sort({ createDate: -1 });
 
         return {
-            data: transaction
-        }
-    } else if (arg.url == '/get-balance') {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("influencer")
-            .select()
-            .eq("accessToken", token)
-            .single()
+            data: transactions
+        };
+    } else if (arg.url === '/get-balance') {
+        // ดึงรายการ transaction ล่าสุดเพื่อคำนวณ balance
+        const lastTransaction = await Transaction.find({ sourceAccountId: accountId })
+            .sort({ createDate: -1 })
+            .limit(1);
 
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-
-        const accountId = findToken.accountId
-
-        const { data: lastTransaction, error: lastTransactionError } = await supabase
-            .from("transaction")
-            .select()
-            .eq("sourceAccountId", accountId)
-            .order("createDate", { ascending: false })
-
-        const balance = lastTransaction[0]?.balance || 0
+        const balance = lastTransaction[0]?.balance || 0;
 
         return {
             data: balance
-        }
-    } else if (arg.url == '/withdraw') {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("influencer")
-            .select()
-            .eq("accessToken", token)
-            .single()
-
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-
-        const accountId = findToken.accountId
-
+        };
+    } else if (arg.url === '/withdraw') {
         const {
             amount,
             sourceAccountNumber,
             bank
-        } = arg.body
+        } = arg.body;
 
-        const { data: lastTransaction, error: lastTransactionError } = await supabase
-            .from("transaction")
-            .select()
-            .eq("sourceAccountId", accountId)
-            .order("createDate", { ascending: false })
+        // ดึงรายการ transaction ล่าสุดเพื่อคำนวณ balance
+        const lastTransaction = await Transaction.find({ sourceAccountId: accountId })
+            .sort({ createDate: -1 })
+            .limit(1);
 
-        const balance = lastTransaction[0]?.balance || 0
+        const balance = lastTransaction[0]?.balance || 0;
 
-        const { data: insertTransaction, error: insertTransactionError } = await supabase
-            .from("transaction")
-            .insert([
-                {
-                    amount: amount,
-                    balance: balance - amount,
-                    transactionType: 'withdraw',
-                    sourceAccountId: accountId,
-                    destinationAccountId: null,
-                    status: "success",
-                    remark: `ถอนเงิน ไปยัง ${bank} เลขบัญชี ${sourceAccountNumber}`
-                }
-            ])
-
-        if (insertTransactionError) {
-            return { error: { status: 500, data: "Internal Server Error" } }
+        if (balance < amount) {
+            return { error: { status: 400, data: "ยอดเงินไม่เพียงพอ" } };
         }
 
+        // บันทึก transaction ใหม่
+        const newTransaction = new Transaction({
+            amount,
+            balance: balance - amount,
+            transactionType: 'withdraw',
+            sourceAccountId: accountId,
+            destinationAccountId: null,
+            status: "success",
+            remark: `ถอนเงิน ไปยัง ${bank} เลขบัญชี ${sourceAccountNumber}`
+        });
+
+        await newTransaction.save();
 
         return {
             data: "success"
-        }
+        };
     }
+
     return { error: { status: 404, data: 'Not found' } };
 }
-
 
 export const financeApi = createApi({
     reducerPath: "financeApi",
@@ -163,7 +110,6 @@ export const financeApi = createApi({
                     }
                 })
             }),
-            
         }
     }
 })
@@ -172,5 +118,4 @@ export const {
     useFinanaceTransactionsQuery,
     useGetBalanceQuery,
     useWithdrawMutation,
-    
-} = financeApi
+} = financeApi;

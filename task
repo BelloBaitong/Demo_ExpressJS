@@ -229,5 +229,61 @@ response
 ]
 
 
+# MARKETTER #
+===================================================
 
 
+
+
+
+{
+  "_id": {
+    "$oid": "6722344433dd55b541502c6d"
+  },
+  "email": "example@example.com",
+  "password": "$2a$10$FNhY2DcKY.IqXZwlNG9H6u5gzsH.kMrC2Y3l6fUPro81JHKtyCBY.",
+  "firstName": "John",
+  "lastName": "Doe",
+  "facebook": "https://facebook.com/example",
+  "instagram": "https://instagram.com/example",
+  "tiktok": "https://tiktok.com/@example",
+  "x": "https://x.com/example",
+  "profilePicture": "http://example.com/profile.jpg",
+  "categories": [
+    "Fitness",
+    "Travel"
+  ],
+  "yourInfo": "Hello! I'm a content creator.",
+  "accountId": {
+    "$oid": "67224606d910929f39c35f2b"
+  },
+  "brand": "MyBrand",
+  "brandPicture": "http://example.com/brand.jpg",
+  "createdAt": {
+    "$date": "2024-10-30T14:43:19.014Z"
+  },
+  "updatedAt": {
+    "$date": "2024-10-30T14:45:12.210Z"
+  },
+  "__v": 0,
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3MjI0NjA3ZDkxMDkyOWYzOWMzNWYyZSIsImlhdCI6MTczMDI5OTUxMiwiZXhwIjoxNzQwNjY3NTEyfQ.XEFFiwMajx6NxB61tFPjwPe_LgoL8PDy-XClA7Zbis0"
+}
+
+
+
+
+
+
+    // ฟังก์ชันสำหรับดึงงานทั้งหมด
+    async getJobs(req, res) {
+        try {
+            const jobs = await Job.find({ isDelete: false }).populate('marketerId');
+            if (!jobs.length) {
+                return res.status(404).json({ success: false, message: "ไม่พบข้อมูลงาน" });
+            }
+            res.status(200).json({ success: true, data: jobs });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ success: false, message: "เกิดข้อผิดพลาดจากเซิร์ฟเวอร์" });
+        }
+    }     

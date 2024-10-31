@@ -1,6 +1,7 @@
 require('dotenv').config()
 
 const express = require('express')
+const http = require('http')
 const cors = require('cors')
 const ratelimit = require('express-rate-limit')
 const helmet = require('helmet')
@@ -12,11 +13,24 @@ const { create } = require('domain')
 const short_uuid = require('short-uuid')
 const multer = require('multer')
 const cloudinary = require('cloudinary').v2;
+const nodemailer = require('nodemailer')
 
 const { debug } = require('./src/config/debug')
 const { onTestDatabase } = require('./src/db/connect_db')
 const { createApi } = require('./src/api')
 const app = express()
+
+
+// สร้าง server ด้วย http เพื่อรองรับ socket.io
+const server = http.createServer(app)
+const { Server } = require('socket.io')
+const io = new Server(server, {
+    cors: {
+        origin: 'http://localhost:3000', // กำหนด origin ที่อนุญาต
+        methods: ['GET', 'POST']
+    }
+})
+
 
 /*SETTING */
 app.use(helmet())
@@ -59,6 +73,51 @@ onTestDatabase()
 
 //     }
 // })
+// Create a transporter object using the default SMTP transport
+const transporter = nodemailer.createTransport({
+    service: 'gmail', // หรือ 'smtp.example.com' สำหรับ SMTP Server อื่น ๆ
+    auth: {
+        user: process.env.EMAIL_USER, // ที่อยู่อีเมลของคุณ
+        pass: process.env.EMAIL_PASSWORD, // รหัสผ่านหรือ App Password
+    },
+});
+
+// สร้างฟังก์ชันสำหรับส่งอีเมล
+async function sendEmailNotification(to, subject, message) {
+    const mailOptions = {
+        from: process.env.EMAIL_USER, // อีเมลผู้ส่ง
+        to, // อีเมลผู้รับ
+        subject, // หัวข้ออีเมล
+        text: message, // เนื้อหาอีเมล (แบบ text)
+    };
+
+    try {
+        const info = await transporter.sendMail(mailOptions);
+        console.log('Email sent:', info.response);
+    } catch (error) {
+        console.error('Error sending email:', error);
+    }
+}
+
+module.exports = sendEmailNotification;
+
+
+
+/* Socket.IO logic */
+io.on('connection', (socket) => {
+    console.log('A user connected:', socket.id)
+
+    // ตัวอย่างการส่ง event เมื่อมีการจ้างงานใหม่
+    socket.on('newHireNotification', (data) => {
+        socket.broadcast.emit('newHire', data) // แจ้งเตือน influencer คนอื่น ๆ
+    })
+
+    socket.on('disconnect', () => {
+        console.log('A user disconnected:', socket.id)
+    })
+})
+createApi(app, io) // ส่ง io ให้ router
+
 
 /* Debuging */
 app.use((req, res, next) => {

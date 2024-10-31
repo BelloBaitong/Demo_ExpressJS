@@ -1,155 +1,60 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import Cookies from "js-cookie";
-import { supabase } from "../../shared/supabase";
 import { v4 as uuidv4 } from 'uuid';
+// Import โมเดล Mongoose
+import Influencer from "../../models/Influencer";
+import Portfolio from "../../models/Portfolio";
+import Account from "../../models/Account";
 
 const mockBaseQuery = async (arg) => {
     // Handle different endpoints (arg contains the query path or params)
     if (arg.url === '/login') {
-        const { email, password } = arg.body
-        const { data: influencerData, error } = await supabase
-            .from("influencer")
-            .select("email, password, accessToken")
-            .eq("email", email);
+        const { email, password } = arg.body;
+        const influencerData = await Influencer.findOne({ email });
 
-        if (error) {
-            console.log('error', error)
-            return { error: { status: 500, data: "Internal Server Error" } };
-        }
-
-        if (influencerData.length === 0) {
+        if (!influencerData) {
             return { error: { status: 400, data: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" } };
         }
 
-        const findAuth = influencerData[0]; // Supabase will return an array, so use the first entry.
-
-        if (findAuth.password !== password) {
+        if (influencerData.password !== password) {
             return { error: { status: 400, data: "อีเมลหรือรหัสผ่านไม่ถูกต้อง" } };
         }
 
         return {
             data: {
-                accessToken: findAuth.accessToken
+                accessToken: influencerData.accessToken
             }
         };
     } else if (arg.url == '/me') {
-        const token = Cookies.get('accessToken')
+        const token = Cookies.get('accessToken');
         if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
+            return { error: { status: 401, data: "unauthorize" } };
         }
-        const { data: findToken, error } = await supabase
-            .from("influencer")
-            .select()
-            .eq("accessToken", token)
-            .single()
 
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
+        const findToken = await Influencer.findOne({ accessToken: token });
+        if (!findToken) {
+            return { error: { status: 401, data: "unauthorize" } };
         }
+
+        return {
+            data: findToken
+        };
+    } else if (arg.url.includes('/view-profile')) {
+        const token = Cookies.get('accessToken');
+        if (!token) {
+            return { error: { status: 401, data: "unauthorize" } };
+        }
+
+        const influId = arg.params;
+        const findToken = await Influencer.findOne({ influId });
 
         if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
+            return { error: { status: 500, data: "Internal Server Error" } };
         }
-
-        const {
-            influId,
-            email,
-            accessToken,
-            firstName,
-            lastName,
-            profilePicture,
-            facebook,
-            facebookFollower,
-            instagram,
-            instagramFollower,
-            x,
-            xFollower,
-            tiktok,
-            tiktokFollower,
-            categories,
-            yourInfo,
-            accountId,
-        } = findToken
-        return {
-            data: {
-                influId,
-                email,
-                accessToken,
-                firstName,
-                lastName,
-                profilePicture,
-                facebook,
-                facebookFollower,
-                instagram,
-                instagramFollower,
-                x,
-                xFollower,
-                tiktok,
-                tiktokFollower,
-                categories,
-                yourInfo,
-                accountId,
-            }
-        }
-    } else if (arg.url.includes('/view-profile')) {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-
-        const influId = arg.params
-        const { data: findToken, error } = await supabase
-            .from("influencer")
-            .select()
-            .eq("influId", influId)
-            .single()
-
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-
-
-        const {
-            email,
-            accessToken,
-            firstName,
-            lastName,
-            profilePicture,
-            facebook,
-            facebookFollower,
-            instagram,
-            instagramFollower,
-            x,
-            xFollower,
-            tiktok,
-            tiktokFollower,
-            categories,
-            yourInfo,
-            accountId,
-        } = findToken
 
         return {
-            data: {
-                influId,
-                email,
-                accessToken,
-                firstName,
-                lastName,
-                profilePicture,
-                facebook,
-                facebookFollower,
-                instagram,
-                instagramFollower,
-                x,
-                xFollower,
-                tiktok,
-                tiktokFollower,
-                categories,
-                yourInfo,
-                accountId,
-            }
-        }
+            data: findToken
+        };
     } else if (arg.url == '/register') {
         const {
             email,
@@ -167,204 +72,109 @@ const mockBaseQuery = async (arg) => {
             profilePicture,
             categories,
             yourInfo
-        } = arg.body
-        const token = uuidv4()
-        const { data: account, error: insertAccountError } = await supabase
-            .from("account")
-            .insert([
-                {
-                    type: 'influencer'
-                }
-            ])
-            .select()
-            .single()
+        } = arg.body;
+        const token = uuidv4();
 
-        if (insertAccountError) {
-            console.log('insertError', insertAccountError)
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
+        const account = await Account.create({ type: 'influencer' });
 
-        const { data: registerData, error: insertError } = await supabase
-            .from("influencer")
-            .insert([
-                {
-                    email,
-                    password,
-                    firstName,
-                    lastName,
-                    facebook,
-                    facebookFollower,
-                    instagram,
-                    instagramFollower,
-                    x,
-                    xFollower,
-                    tiktok,
-                    tiktokFollower,
-                    profilePicture,
-                    categories,
-                    yourInfo,
-                    accessToken: token,
-                    accountId: account.accountId
-                }
-            ])
-            .select('influId')
-            .single()
-
-        if (insertError) {
-            console.log('insertError', insertError)
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
+        const registerData = await Influencer.create({
+            email,
+            password,
+            firstName,
+            lastName,
+            facebook,
+            facebookFollower,
+            instagram,
+            instagramFollower,
+            x,
+            xFollower,
+            tiktok,
+            tiktokFollower,
+            profilePicture,
+            categories,
+            yourInfo,
+            accessToken: token,
+            accountId: account._id
+        });
 
         return {
             data: {
                 accessToken: token
             }
         };
-
     } else if (arg.url == '/check-email') {
-        const {
-            email,
-        } = arg.body
-        const { data: findEmail, error } = await supabase
-            .from("influencer")
-            .select()
-            .eq("email", email);
+        const { email } = arg.body;
+        const findEmail = await Influencer.findOne({ email });
 
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        if (findEmail.length != 0) {
-            return { error: { status: 400, data: "อีเมลนี้มีผู้ใช้งานอยู่แล้ว" } }
+        if (findEmail) {
+            return { error: { status: 400, data: "อีเมลนี้มีผู้ใช้งานอยู่แล้ว" } };
         }
         return {
             status: 200,
             data: "สามารถใช้อีเมลนี้ได้"
-        }
-
+        };
     } else if (arg.url == '/portfolio') {
-        const token = Cookies.get('accessToken')
+        const token = Cookies.get('accessToken');
         if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("influencer")
-            .select()
-            .eq("accessToken", token)
-            .single()
-
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
+            return { error: { status: 401, data: "unauthorize" } };
         }
 
-        const influId = findToken.influId
-        const { data: portfolios, error2 } = await supabase
-            .from("portfolio")
-            .select()
-            .eq("influId", influId);
-
-        if (error2) {
-            return { error: { status: 500, data: "Internal Server Error" } }
+        const findToken = await Influencer.findOne({ accessToken: token });
+        if (!findToken) {
+            return { error: { status: 500, data: "Internal Server Error" } };
         }
 
+        const portfolios = await Portfolio.find({ influId: findToken.influId });
         return {
-            data: portfolios.map((p) => {
-                return {
-                    title: p.title,
-                    description: p.description,
-                    firstImage: p.images[0],
-                    images: p.images
-                }
-            })
-        }
-
+            data: portfolios.map(p => ({
+                title: p.title,
+                description: p.description,
+                firstImage: p.images[0],
+                images: p.images
+            }))
+        };
     } else if (arg.url.includes('/view-portfolio')) {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const influId = arg.params
-        console.log('influId', influId)
-        const { data: findToken, error } = await supabase
-            .from("influencer")
-            .select()
-            .eq("influId", influId)
-            .single()
-
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        const { data: portfolios, error2 } = await supabase
-            .from("portfolio")
-            .select()
-            .eq("influId", influId);
-
-        if (error2) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
+        const influId = arg.params;
+        const portfolios = await Portfolio.find({ influId });
 
         return {
-            data: portfolios.map((p) => {
-                return {
-                    title: p.title,
-                    description: p.description,
-                    firstImage: p.images[0],
-                    images: p.images
-                }
-            })
-        }
-
+            data: portfolios.map(p => ({
+                title: p.title,
+                description: p.description,
+                firstImage: p.images[0],
+                images: p.images
+            }))
+        };
     } else if (arg.url == '/add-portfolio') {
-        const token = Cookies.get('accessToken')
+        const token = Cookies.get('accessToken');
         if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
+            return { error: { status: 401, data: "unauthorize" } };
         }
 
-        const { data: findToken, error } = await supabase
-            .from("influencer")
-            .select("influId")
-            .eq("accessToken", token)
-            .single()
-
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
+        const findToken = await Influencer.findOne({ accessToken: token });
+        if (!findToken) {
+            return { error: { status: 500, data: "Internal Server Error" } };
         }
 
-        const influId = findToken.influId
+        const { title, description, images } = arg.body;
 
-        const {
+        await Portfolio.create({
+            influId: findToken.influId,
             title,
             description,
             images
-        } = arg.body
-
-        const { data: portfolioData, error: insertError } = await supabase
-            .from("portfolio")
-            .insert([
-                {
-                    influId: influId,
-                    title,
-                    description,
-                    images
-                }
-            ]);
-
-        if (insertError) {
-            return { error: { status: 500, data: "Failed to add portfolio" } };
-        }
+        });
 
         return {
             data: "success"
-        }
-
+        };
     }
 
-    // You can add more mock responses for other endpoints here.
+    // If the endpoint is not found
     return { error: { status: 404, data: 'Not found' } };
 };
 
-
+// Redux API slice
 export const authApi = createApi({
     reducerPath: "authApi",
     baseQuery: mockBaseQuery,
@@ -484,9 +294,9 @@ export const authApi = createApi({
                     }
                 })
             })
-        }
+        };
     }
-})
+});
 
 export const {
     useLoginMutation,
@@ -497,4 +307,4 @@ export const {
     useAddPortfolioMutation,
     useViewProfileQuery,
     useViewPortfolioQuery
-} = authApi
+} = authApi;

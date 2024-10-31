@@ -1,330 +1,127 @@
 import { createApi } from "@reduxjs/toolkit/query/react";
 import Cookies from "js-cookie";
-import { supabase } from "../../shared/supabase";
+import mongoose from "mongoose";
+import Marketer from "../../models/Marketer"; // Import your Marketer model
+import Transaction from "../../models/Transaction"; // Import your Transaction model
+import Influencer from "../../models/Influencer"; // Import your Influencer model
+import Job from "../../models/Job"; // Import your Job model
 
 const mockBaseQuery = async (arg) => {
-    if (arg.url == '/finance-transaction') {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("marketer")
-            .select()
-            .eq("accessToken", token)
-            .single()
+    await mongoose.connect(process.env.MONGO_URI); // Ensure you are connected to your MongoDB
 
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
+    const token = Cookies.get('accessToken');
+    if (!token) {
+        return { error: { status: 401, data: "unauthorize" } };
+    }
 
-        if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
+    const marketer = await Marketer.findOne({ accessToken: token });
+    if (!marketer) {
+        return { error: { status: 401, data: "unauthorize" } };
+    }
 
-        const accountId = findToken.accountId
+    const accountId = marketer.accountId;
 
-        console.log('accountId', accountId)
-        const { data: transaction, error: transactionError } = await supabase
-            .from("transaction")
-            .select()
-            .eq("sourceAccountId", accountId)
-            .order("createDate", { ascending: false })
+    if (arg.url === '/finance-transaction') {
+        const transactions = await Transaction.find({ sourceAccountId: accountId }).sort({ createDate: -1 });
+        return { data: transactions };
+    } else if (arg.url === '/get-balance') {
+        const lastTransaction = await Transaction.find({ sourceAccountId: accountId }).sort({ createDate: -1 }).limit(1);
+        const balance = lastTransaction[0]?.balance || 0;
+        return { data: balance };
+    } else if (arg.url === '/deposit') {
+        const { amount, sourceAccountNumber, bank } = arg.body;
+        const lastTransaction = await Transaction.find({ sourceAccountId: accountId }).sort({ createDate: -1 }).limit(1);
+        const balance = lastTransaction[0]?.balance || 0;
 
-        return {
-            data: transaction
-        }
-    } else if (arg.url == '/get-balance') {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("marketer")
-            .select()
-            .eq("accessToken", token)
-            .single()
-
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-
-        const accountId = findToken.accountId
-
-        const { data: lastTransaction, error: lastTransactionError } = await supabase
-            .from("transaction")
-            .select()
-            .eq("sourceAccountId", accountId)
-            .order("createDate", { ascending: false })
-
-        const balance = lastTransaction[0]?.balance || 0
-
-        return {
-            data: balance
-        }
-    } else if (arg.url == '/deposit') {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("marketer")
-            .select()
-            .eq("accessToken", token)
-            .single()
-
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-
-        const accountId = findToken.accountId
-
-        const {
+        const newTransaction = new Transaction({
             amount,
-            sourceAccountNumber,
-            bank
-        } = arg.body
+            balance: balance + amount,
+            transactionType: 'deposit',
+            sourceAccountId: accountId,
+            destinationAccountId: null,
+            status: "success",
+            remark: `ฝากเงิน จาก ${bank} เลขบัญชี ${sourceAccountNumber}`,
+        });
 
-        const { data: lastTransaction, error: lastTransactionError } = await supabase
-            .from("transaction")
-            .select()
-            .eq("sourceAccountId", accountId)
-            .order("createDate", { ascending: false })
-
-        const balance = lastTransaction[0]?.balance || 0
-
-        const { data: insertTransaction, error: insertTransactionError } = await supabase
-            .from("transaction")
-            .insert([
-                {
-                    amount: amount,
-                    balance: balance + amount,
-                    transactionType: 'deposit',
-                    sourceAccountId: accountId,
-                    destinationAccountId: null,
-                    status: "success",
-                    remark: `ฝากเงิน จาก ${bank} เลขบัญชี ${sourceAccountNumber}`
-                }
-            ])
-
-        if (insertTransactionError) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-
-        return {
-            data: "success"
-        }
-    } else if (arg.url == '/consume-credit') {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("marketer")
-            .select()
-            .eq("accessToken", token)
-            .single()
-
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-
-        const accountId = findToken.accountId
-
-        const {
-            amount,
-            referenceJobId
-        } = arg.body
-        const { data: lastTransaction, error: lastTransactionError } = await supabase
-            .from("transaction")
-            .select()
-            .eq("sourceAccountId", accountId)
-            .order("createDate", { ascending: false })
-
-        const balance = lastTransaction[0]?.balance || 0
+        await newTransaction.save();
+        return { data: "success" };
+    } else if (arg.url === '/consume-credit') {
+        const { amount, referenceJobId } = arg.body;
+        const lastTransaction = await Transaction.find({ sourceAccountId: accountId }).sort({ createDate: -1 }).limit(1);
+        const balance = lastTransaction[0]?.balance || 0;
 
         if (amount > balance) {
-            return { error: { status: 400, data: "เงินคงเหลือไม่เพียงพอ" } }
+            return { error: { status: 400, data: "เงินคงเหลือไม่เพียงพอ" } };
         }
 
-        const { data: insertTransaction, error: insertTransactionError } = await supabase
-            .from("transaction")
-            .insert([
-                {
-                    amount: amount,
-                    balance: balance - amount,
-                    transactionType: 'consume',
-                    sourceAccountId: accountId,
-                    destinationAccountId: null,
-                    status: "success",
-                    remark: `หักเงินออก จากเครดิต`,
-                    referenceJobId: referenceJobId
-                }
-            ])
-
-        if (insertTransactionError) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-
-        return {
-            data: "success"
-        }
-    } else if (arg.url == '/withdraw') {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("marketer")
-            .select()
-            .eq("accessToken", token)
-            .single()
-
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-
-        const accountId = findToken.accountId
-
-        const {
+        const newTransaction = new Transaction({
             amount,
-            sourceAccountNumber,
-            bank
-        } = arg.body
+            balance: balance - amount,
+            transactionType: 'consume',
+            sourceAccountId: accountId,
+            destinationAccountId: null,
+            status: "success",
+            remark: `หักเงินออก จากเครดิต`,
+            referenceJobId: referenceJobId,
+        });
 
-        const { data: lastTransaction, error: lastTransactionError } = await supabase
-            .from("transaction")
-            .select()
-            .eq("sourceAccountId", accountId)
-            .order("createDate", { ascending: false })
+        await newTransaction.save();
+        return { data: "success" };
+    } else if (arg.url === '/withdraw') {
+        const { amount, sourceAccountNumber, bank } = arg.body;
+        const lastTransaction = await Transaction.find({ sourceAccountId: accountId }).sort({ createDate: -1 }).limit(1);
+        const balance = lastTransaction[0]?.balance || 0;
 
-        const balance = lastTransaction[0]?.balance || 0
+        const newTransaction = new Transaction({
+            amount,
+            balance: balance - amount,
+            transactionType: 'withdraw',
+            sourceAccountId: accountId,
+            destinationAccountId: null,
+            status: "success",
+            remark: `ถอนเงิน ไปยัง ${bank} เลขบัญชี ${sourceAccountNumber}`,
+        });
 
-        const { data: insertTransaction, error: insertTransactionError } = await supabase
-            .from("transaction")
-            .insert([
-                {
-                    amount: amount,
-                    balance: balance - amount,
-                    transactionType: 'withdraw',
-                    sourceAccountId: accountId,
-                    destinationAccountId: null,
-                    status: "success",
-                    remark: `ถอนเงิน ไปยัง ${bank} เลขบัญชี ${sourceAccountNumber}`
-                }
-            ])
+        await newTransaction.save();
+        return { data: "success" };
+    } else if (arg.url === '/approve-pay-credit') {
+        const { influId, jobId, referenceJobEnrollId } = arg.body;
 
-        if (insertTransactionError) {
-            return { error: { status: 500, data: "Internal Server Error" } }
+        const influencer = await Influencer.findOne({ influId });
+        if (!influencer) {
+            return { error: { status: 404, data: "Influencer not found" } };
         }
 
+        const accountId = influencer.accountId;
 
-        return {
-            data: "success"
-        }
-    } else if (arg.url == '/approve-pay-credit') {
-        const token = Cookies.get('accessToken')
-        if (!token) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
-        const { data: findToken, error } = await supabase
-            .from("marketer")
-            .select()
-            .eq("accessToken", token)
-            .single()
+        const lastTransaction = await Transaction.find({ sourceAccountId: accountId }).sort({ createDate: -1 }).limit(1);
+        const balance = lastTransaction[0]?.balance || 0;
 
-        if (error) {
-            return { error: { status: 500, data: "Internal Server Error" } }
+        const job = await Job.findOne({ jobId });
+        if (!job) {
+            return { error: { status: 404, data: "Job not found" } };
         }
 
-        if (!findToken) {
-            return { error: { status: 401, data: "unauthorize" } }
-        }
+        const amount = job.paymentPerInfluencer;
 
-        const {
-            influId,
-            jobId,
-            referenceJobEnrollId
-        } = arg.body
+        const newTransaction = new Transaction({
+            amount,
+            balance: balance + amount,
+            transactionType: 'receive',
+            sourceAccountId: accountId,
+            destinationAccountId: null,
+            status: "success",
+            remark: `ได้รับเงิน  จากการทำงานหมายเลข ${jobId} ${job?.jobTitle}`,
+            referenceJobId: jobId,
+            referenceJobEnrollId: referenceJobEnrollId,
+        });
 
-        const { data: influ, errorInflu } = await supabase
-            .from("influencer")
-            .select()
-            .eq("influId", influId)
-            .single()
-
-        if (errorInflu) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        const accountId = influ.accountId
-
-        const { data: lastTransaction, error: lastTransactionError } = await supabase
-            .from("transaction")
-            .select()
-            .eq("sourceAccountId", accountId)
-            .order("createDate", { ascending: false })
-
-        const balance = lastTransaction[0]?.balance || 0
-
-        const { data: job, error: jobError } = await supabase
-            .from("job")
-            .select()
-            .eq("jobId", jobId)
-            .single()
-
-        if (jobError) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-        const amount = job.paymentPerInfluencer
-
-        const { data: insertTransaction, error: insertTransactionError } = await supabase
-            .from("transaction")
-            .insert([
-                {
-                    amount: amount,
-                    balance: balance + amount,
-                    transactionType: 'receive',
-                    sourceAccountId: accountId,
-                    destinationAccountId: null,
-                    status: "success",
-                    remark: `ได้รับเงิน  จากการทำงานหมายเลข ${jobId} ${job?.jobTitle}`,
-                    referenceJobId: jobId,
-                    referenceJobEnrollId: referenceJobEnrollId
-                }
-            ])
-
-        if (insertTransactionError) {
-            return { error: { status: 500, data: "Internal Server Error" } }
-        }
-
-
-        return {
-            data: "success"
-        }
+        await newTransaction.save();
+        return { data: "success" };
     }
-    return { error: { status: 404, data: 'Not found' } };
-}
 
+    return { error: { status: 404, data: 'Not found' } };
+};
 
 export const mktFinanceApi = createApi({
     reducerPath: "mktFinanceApi",
@@ -344,78 +141,48 @@ export const mktFinanceApi = createApi({
                 })
             }),
             deposit: builder.mutation({
-                query: ({
-                    amount,
-                    sourceAccountNumber,
-                    bank
-                }) => ({
+                query: ({ amount, sourceAccountNumber, bank }) => ({
                     url: "/deposit",
                     method: "POST",
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: {
-                        amount,
-                        sourceAccountNumber,
-                        bank
-                    }
+                    body: { amount, sourceAccountNumber, bank }
                 })
             }),
             withdraw: builder.mutation({
-                query: ({
-                    amount,
-                    sourceAccountNumber,
-                    bank
-                }) => ({
+                query: ({ amount, sourceAccountNumber, bank }) => ({
                     url: "/withdraw",
                     method: "POST",
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: {
-                        amount,
-                        sourceAccountNumber,
-                        bank
-                    }
+                    body: { amount, sourceAccountNumber, bank }
                 })
             }),
             consumeCredit: builder.mutation({
-                query: ({
-                    amount,
-                    referenceJobId
-                }) => ({
+                query: ({ amount, referenceJobId }) => ({
                     url: "/consume-credit",
                     method: "POST",
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: {
-                        amount,
-                        referenceJobId
-                    }
+                    body: { amount, referenceJobId }
                 })
             }),
             approvePaycredit: builder.mutation({
-                query: ({
-                    influId,
-                    jobId,
-                    referenceJobEnrollId
-                }) => ({
+                query: ({ influId, jobId, referenceJobEnrollId }) => ({
                     url: "/approve-pay-credit",
                     method: "POST",
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: {
-                        influId,
-                        jobId,
-                        referenceJobEnrollId
-                    }
+                    body: { influId, jobId, referenceJobEnrollId }
                 })
             })
-        }
+        };
     }
-})
+});
 
 export const {
     useFinanaceTransactionsQuery,
@@ -424,4 +191,4 @@ export const {
     useWithdrawMutation,
     useConsumeCreditMutation,
     useApprovePaycreditMutation
-} = mktFinanceApi
+} = mktFinanceApi;
