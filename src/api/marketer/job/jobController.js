@@ -1,15 +1,11 @@
 const { Marketer } = require('../auth/authModel');
 const { Job, JobEnroll, JobDraft, JobPost } = require('../../influencer/job/jobModel');
 const mongoose = require('mongoose');
-const { tag } = require ('../job/categories');
-
+const { categories } = require ('../job/categories');
 // เพิ่มงานใหม่
 exports.addPostJob = async (req, res) => {
     try {
         const { jobTitle, jobDescription, tag, follower, totalPayment, influencerCount, paymentPerInfluencer, dueDate, files } = req.body;
-        if (!tag || !Array.isArray(tag) || tag.length === 0) { // เปลี่ยนจาก categories เป็น tags
-            return res.status(400).json({ error: "Please select at least one tag." }); // เปลี่ยนข้อความให้สอดคล้อง
-        }
         const job = new Job({
             marketerId: req.user.id, // มาจาก token
             jobTitle,
@@ -29,19 +25,18 @@ exports.addPostJob = async (req, res) => {
     }
 };
 
-exports.getTag = (req, res) => { // เปลี่ยนชื่อฟังก์ชันให้สอดคล้องกับการใช้ tags
+exports.getCategories = (req, res) => {
     const { value } = req.query; // ดึงพารามิเตอร์ `value` จากคำขอ
-
-    // ถ้าพารามิเตอร์ `value` ถูกส่งมา ให้กรองแท็ก
-    let filteredTag = tag; // เปลี่ยนจาก categories เป็น tags
+       // ถ้าพารามิเตอร์ `value` ถูกส่งมา ให้กรองหมวดหมู่
+    let filteredCategories = categories;
     if (value) {
-        filteredTag = tag.filter(tag => // เปลี่ยนจาก category เป็น tag
-            tag.value === value
-        );
-    }
-
-    res.json(filteredTag);
+    filteredCategories = categories.filter(category =>
+    category.value === value
+    );
+}
+    res.json(filteredCategories);
 };
+
 
 // เรียกดูงานทั้งหมด
 exports.getJobs = async (req, res) => {
