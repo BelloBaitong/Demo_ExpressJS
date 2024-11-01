@@ -63,6 +63,22 @@ async function register(req, res) {
     }
 }
 
+    async function checkEmail(req, res) {
+    const { email } = req.body;
+    try {
+        const marketer = await Marketer.findOne({ email });
+        if (marketer) {
+            return res.status(400).json({ error: "Email is already in use." });
+        } else {
+            return res.status(200).json({ message: "Email is available." });
+        }
+    } catch (err) {
+        return res.status(500).json({ message: "Server error" });
+    }
+}
+
+
+
 // ฟังก์ชันสำหรับการเข้าสู่ระบบ Marketer
 async function login(req, res) {
     const { email, password } = req.body;
@@ -107,6 +123,7 @@ async function getMe(req, res) {
 
 module.exports = {
     register,
+    checkEmail,
     login,
     getMe
 };
