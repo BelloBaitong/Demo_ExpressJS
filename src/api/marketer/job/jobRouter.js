@@ -5,7 +5,7 @@ const authMiddleware = require('../../../middleware/authMiddleware.js'); // Impo
 
 
 router.post('/add-post-job', authMiddleware, jobController.addPostJob);
-router.get('/categories',authMiddleware, jobController.getCategories);
+router.get('/categories',authMiddleware, jobController.getTag);
 router.get('/get-jobs', authMiddleware, jobController.getJobs);
 router.post('/hire',authMiddleware, jobController.hireInfluencer);
 router.post('/reject', authMiddleware, jobController.rejectInfluencer);
