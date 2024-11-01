@@ -28,7 +28,17 @@ exports.addPostJob = async (req, res) => {
 
 
 exports.getCategories = (req, res) => {
-    res.json(categories);
+    const { value } = req.query; // ดึงพารามิเตอร์ `value` จากคำขอ
+
+    // ถ้าพารามิเตอร์ `value` ถูกส่งมา ให้กรองหมวดหมู่
+    let filteredCategories = categories;
+    if (value) {
+        filteredCategories = categories.filter(category =>
+            category.value === value
+        );
+    }
+
+    res.json(filteredCategories);
 };
 
 // เรียกดูงานทั้งหมด
@@ -142,7 +152,6 @@ exports.approvePost = async (req, res) => {
     try {
         const updatedPost = await JobPost.findByIdAndUpdate(jobPostId, { status: "approve" }, { new: true });
         await JobEnroll.updateOne({ _id: updatedPost.jobEnrollId }, { jobStatus: "complete" });
-        
 
         // แจ้งเตือนให้ influencer เมื่อโพสต์ได้รับการอนุมัติ
         //io.to(updatedPost.influId).emit('postApproved', { jobPostId });
