@@ -25,6 +25,11 @@ class AuthController {
     async register(req, res) {
         const { email, password, firstName, lastName, profilePicture, facebook, facebookFollower, instagram, instagramFollower, x, xFollower, tiktok, tiktokFollower, categories, yourInfo } = req.body;
         try {
+            const existingInfluencer = await Influencer.findOne({ email });
+            if (existingInfluencer) {
+                return res.status(400).json({ error: "Email is already in use." });
+            }
+
             const hashedPassword = await bcrypt.hash(password, 10);
             const account = new Account({ type: 'influencer' });
             await account.save();
