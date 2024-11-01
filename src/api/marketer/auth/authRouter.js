@@ -3,6 +3,7 @@ const router = express.Router();
 const AuthController = require('./authController');
 const authMiddleware = require('../../../middleware/authMiddleware.js'); // Import the middleware
 
+////////////////
 
 // Register route
 router.post('/register', AuthController.register);
