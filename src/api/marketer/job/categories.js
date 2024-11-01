@@ -1,5 +1,5 @@
 // categories.js
-const tag = [
+const categories = [
     {
         label: "Fashion - แฟชัน",
         value: "fashion"

@@ -6,9 +6,9 @@ const { categories } = require ('../job/categories');
 exports.addPostJob = async (req, res) => {
     try {
         const { jobTitle, jobDescription, tag, follower, totalPayment, influencerCount, paymentPerInfluencer, dueDate, files } = req.body;
-        if (!tag || !Array.isArray(tag) || tag.length === 0) { // เปลี่ยนจาก categories เป็น tags
-            return res.status(400).json({ error: "Please select at least one tag." }); // เปลี่ยนข้อความให้สอดคล้อง
-        }
+        /*if (!categories || !Array.isArray(tag) || categories.length === 0) { // เปลี่ยนจาก categories เป็น tags
+            return res.status(400).json({ error: "Please select at least one categories." }); // เปลี่ยนข้อความให้สอดคล้อง
+        }*/
         const job = new Job({
             marketerId: req.user.id, // มาจาก token
             jobTitle,
