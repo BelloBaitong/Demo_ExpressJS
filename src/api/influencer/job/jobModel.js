@@ -23,6 +23,8 @@ const JobEnrollSchema = new mongoose.Schema({
     jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Job' },
     influId: { type: mongoose.Schema.Types.ObjectId, ref: 'Influencer' },
     marketerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Marketer' },
+    jobDraftId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'JobDraft' }],
+    jobPostId: [{ type: mongoose.Schema.Types.ObjectId, ref: 'JobPost' }],
     jobStatus: { type: String }
 }, { timestamps: true });
 
@@ -34,8 +36,8 @@ const JobDraftSchema = new mongoose.Schema({
     jobEnrollId: { type: mongoose.Schema.Types.ObjectId, ref: 'JobEnroll' },
     jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Job' },
     content: { type: String },
-    pictureUrl: { type: mongoose.Schema.Types.Mixed },
-    videoUrl: { type: mongoose.Schema.Types.Mixed },
+    pictureURL: { type: mongoose.Schema.Types.Mixed },
+    videoURL: { type: mongoose.Schema.Types.Mixed },
     status: { type: String },
     reasonReject: { type: String },
     createDate: { type: Date, default: Date.now },
@@ -51,7 +53,7 @@ const JobPostSchema = new mongoose.Schema({
     jobEnrollId: { type: mongoose.Schema.Types.ObjectId, ref: 'JobEnroll' },
     jobId: { type: mongoose.Schema.Types.ObjectId, ref: 'Job' },
     postLink: { type: String },
-    pictureUrl: { type: mongoose.Schema.Types.Mixed },
+    pictureURL: { type: mongoose.Schema.Types.Mixed },
     createDate: { type: Date, default: Date.now },
     status: { type: String },
     reasonReject: { type: String },

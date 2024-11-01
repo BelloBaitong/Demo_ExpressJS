@@ -104,6 +104,26 @@ class AuthController {
             res.status(500).json({ message: 'Server error' });
         }
     }
+
+    async viewProfile(req, res) {
+        const { influId } = req.params;
+        try {
+            const influencer = await Influencer.findById(influId);
+            res.status(200).json(influencer);
+        } catch (err) {
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
+
+    async viewPortfolioByMarketer(req, res) {
+        const { influId } = req.params;
+        try {
+            const portfolios = await Portfolio.find({ influId });
+            res.status(200).json(portfolios);
+        } catch (err) {
+            res.status(500).json({ message: 'Server error' });
+        }
+    }
 }
 
 module.exports = new AuthController();

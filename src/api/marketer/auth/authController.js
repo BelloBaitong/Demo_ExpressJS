@@ -105,8 +105,15 @@ async function getMe(req, res) {
     }
 }
 
+async function viewProfile(req, res) {
+    const marketerId = req.params.marketerId;
+    const marketer = await Marketer.findById(marketerId);
+    return res.status(200).json(marketer);
+}
+
 module.exports = {
     register,
     login,
-    getMe
+    getMe,
+    viewProfile
 };

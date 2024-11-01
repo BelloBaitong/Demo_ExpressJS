@@ -157,7 +157,7 @@ const consumeCredit = async (req, res) => {
 const approvePayCredit = async (req, res) => {
     try {
         const { influId, jobId, referenceJobEnrollId } = req.body;
-
+        console.log('jobId', jobId)
         // ดึงข้อมูล Influencer จาก influId
         const influencer = await Influencer.findById(influId);
         if (!influencer) {
@@ -168,7 +168,8 @@ const approvePayCredit = async (req, res) => {
         const lastTransaction = await Transaction.find({ sourceAccountId: accountId }).sort({ createDate: -1 }).limit(1);
         const balance = lastTransaction[0]?.balance || 0;
 
-        const job = await Job.findOne({ jobId });
+        const job = await Job.findOne({ _id: jobId });
+        console.log('job', job)
         if (!job) {
             return res.status(404).json({ message: "Job not found" });
         }
