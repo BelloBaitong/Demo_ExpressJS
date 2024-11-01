@@ -14,7 +14,6 @@ router.post('/login', AuthController.login);
 // Get logged-in marketer profile (Protected route)
 router.get('/me', authMiddleware, AuthController.getMe);
 
-router.post('/check-email', authMiddleware,AuthController.checkEmail);
-
+router.get('/view-profile/:marketerId', authMiddleware, AuthController.viewProfile);
 
 module.exports = router;

@@ -7,6 +7,8 @@ const authMiddleware = require('../../../middleware/authMiddleware.js'); // Impo
 router.post('/login', AuthController.login);
 router.post('/register', AuthController.register);
 router.get('/me', authMiddleware, AuthController.me); // Protect the /me route
+router.get('/view-profile/:influId', authMiddleware, AuthController.viewProfile);
+router.get('/view-portfolio/:influId', authMiddleware, AuthController.viewPortfolioByMarketer);
 
 router.post('/add-portfolio', authMiddleware, AuthController.addPortfolio); // Protect this route
 router.get('/view-portfolio', authMiddleware, AuthController.viewPortfolio); // Protect this route
