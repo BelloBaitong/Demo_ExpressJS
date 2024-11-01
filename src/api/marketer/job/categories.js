@@ -1,4 +1,5 @@
-const categories = [
+// categories.js
+const tag = [
     {
         label: "Fashion - แฟชัน",
         value: "fashion"
@@ -31,5 +32,6 @@ const categories = [
         label: "Sport - กีฬา",
         value: "sport"
     },
-]
-module.exports = { categories };
+];
+
+module.exports = { tag }; // ใช้ module.exports
