@@ -1,6 +1,8 @@
 const { Influencer } = require('../auth/authModel');
 const { Transaction } = require('./financeModel');
 const Cookies = require('js-cookie');
+const {sendLineNotification} = require('../../../utils/sendNoti');
+
 
 
 // ตรวจสอบ token และดึงข้อมูลผู้ใช้
@@ -61,6 +63,8 @@ exports.withdraw = async (req, res) => {
         });
 
         await newTransaction.save();
+        await sendLineNotification(`มีการถอนเงินจำนวน ${amount} บาท จาก ${bank} เลขบัญชี ${sourceAccountNumber} สำเร็จ`);
+
         res.status(200).json({ message: "success" });
     } catch (error) {
         res.status(error.status || 500).json({ message: error.message });
@@ -72,11 +76,10 @@ exports.deposit = async (req, res) => {
         const { amount, sourceAccountNumber, bank } = req.body;
         const accountId = await validateUser(req.user.id);
         
-        // ตรวจสอบยอดคงเหลือก่อนถอน
         const lastTransaction = await Transaction.find({ sourceAccountId: accountId }).sort({ createDate: -1 }).limit(1);
         const balance = lastTransaction[0]?.balance || 0;
 
-        // บันทึกการถอนเงิน
+        
         const newTransaction = new Transaction({
             amount,
             balance: balance + amount,
@@ -84,10 +87,12 @@ exports.deposit = async (req, res) => {
             sourceAccountId: accountId,
             destinationAccountId: null,
             status: "success",
-            remark: `ถอนเงิน ไปยัง ${bank} เลขบัญชี ${sourceAccountNumber}`
+            remark: `ฝากเงิน จาก ${bank} เลขบัญชี ${sourceAccountNumber}`
         });
 
         await newTransaction.save();
+        await sendLineNotification(`มีการฝากเงินจำนวน ${amount} บาท จาก ${bank} เลขบัญชี ${sourceAccountNumber} สำเร็จ`);
+
         res.status(200).json({ message: "success" });
     } catch (error) {
         res.status(error.status || 500).json({ message: error.message });

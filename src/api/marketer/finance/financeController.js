@@ -1,7 +1,6 @@
 const { Marketer } = require('../auth/authModel');
 const { Transaction } = require('../../influencer/finance/financeModel'); // เชื่อมต่อกับ financeModel
 const {sendLineNotification} = require('../../../utils/sendNoti');
-//const sendEmailNotification = require('../../../../index');
 const {Influencer} = require ('../../influencer/auth/authModel');
 const { Job } = require('../../influencer/job/jobModel')
 
@@ -70,12 +69,7 @@ const deposit = async (req, res) => {
             remark: `ฝากเงิน จาก ${bank} เลขบัญชี ${sourceAccountNumber}`,
         });
         await newTransaction.save();
-        await sendLineNotification(`มีการฝากเงินจำนวน ${amount} จาก ${bank} เลขบัญชี ${sourceAccountNumber} สำเร็จ`);
-
-        //const subject = 'แจ้งเตือนการฝากเงินสำเร็จ';
-        //const message = `มีการฝากเงินจำนวน ${amount} จาก ${bank} เลขบัญชี ${sourceAccountNumber} สำเร็จ`;
-
-        //await sendEmailNotification('baitongbuibui100010@gmail.com', subject, message);
+        await sendLineNotification(`มีการฝากเงินจำนวน ${amount} บาท จาก ${bank} เลขบัญชี ${sourceAccountNumber} สำเร็จ`);
 
         return res.status(200).json({ message: "Deposit successful" });
     } catch (error) {
@@ -110,7 +104,7 @@ const withdraw = async (req, res) => {
         });
 
         await newTransaction.save();
-        //await sendLineNotification(`มีการถอนเงินจำนวน ${amount} จาก ${bank} เลขบัญชี ${sourceAccountNumber} สำเร็จ`);
+        await sendLineNotification(`มีการถอนเงินจำนวน ${amount} บาท จาก ${bank} เลขบัญชี ${sourceAccountNumber} สำเร็จ`);
 
 
         return res.status(200).json({ message: "Withdraw successful" });
@@ -148,6 +142,9 @@ const consumeCredit = async (req, res) => {
         });
 
         await newTransaction.save();
+        await sendLineNotification(`หักเงินออก จากเครดิตจำนวน ${amount} บาท สำเร็จ`);
+
+        
         return res.status(200).json({ message: "Credit consumed successfully" });
     } catch (error) {
         return res.status(500).json({ message: 'Error processing credit consumption', error });
@@ -189,6 +186,9 @@ const approvePayCredit = async (req, res) => {
         });
 
         await newTransaction.save();
+        await sendLineNotification(`ได้รับเงิน จากการทำงานหมายเลข ${amount} บาท จาก ${bank} เลขบัญชี ${sourceAccountNumber} สำเร็จ`);
+
+
         return res.status(200).json({ message: "Payment approved successfully" });
     } catch (error) {
         return res.status(500).json({ message: 'Error processing payment approval', error });
