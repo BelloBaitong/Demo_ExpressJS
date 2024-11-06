@@ -29,9 +29,11 @@ class JobController {
         try {
             const influId = req.user.id;
 
-            const enrollsJob = await JobEnroll.find({ influId })
+            let enrollsJob = await JobEnroll.find({ influId })
                 .populate('marketerId')
                 .populate('jobId')
+
+            enrollsJob = enrollsJob.filter(el => el.jobId)
 
             const jobDraft = await JobDraft.find({ jobEnrollId: { $in: enrollsJob.map(el => el._id) } });
             const jobPost = await JobPost.find({ jobEnrollId: { $in: enrollsJob.map(el => el._id) } });
